@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF--8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ULDL自动化交易策略表现</title>
+    <title>我的自动化交易策略表现</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; color: #333; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #2c3e50; }
-        img { max-width: 100%; height: auto; border-radius: 4px; margin-top: 20px; }
+        .image-container { text-align: center; } /* 让图片居中 */
+        img { max-width: 100%; height: auto; border-radius: 4px; margin-top: 20px; border: 1px solid #ddd; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
         .stat-card { background-color: #f9fafb; padding: 15px; border-radius: 6px; border-left: 4px solid #3498db; }
         .stat-card h3 { margin: 0 0 5px; font-size: 1em; color: #555; }
@@ -20,9 +21,14 @@
 </head>
 <body>
     <div class="container">
-        <h1>ULDL自动化交易策略表现</h1>
-        <!-- 图片将在这里显示，添加一个时间戳参数防止浏览器缓存 -->
-        <img id="equity-curve-img" src="equity_curve.png" alt="资金曲线加载中...">
+        <h1>我的自动化交易策略表现</h1>
+        
+        <div class="image-container">
+            <!-- 核心修正 1: 修改图片路径 -->
+            <img id="equity-curve-img" src="data/equity_curve.png" alt="资金曲线加载中...">
+            <!-- 我为你新增的 pnl_hist.png 也预留了位置，如果不想显示可以删除下面这行 -->
+            <img id="pnl-hist-img" src="data/pnl_hist.png" alt="PnL 分布图加载中...">
+        </div>
         
         <div id="stats-container" class="stats-grid">
             <!-- 统计数据将由JS动态加载到这里 -->
@@ -32,14 +38,14 @@
     </div>
 
     <script>
-        // JS 动态加载数据，使页面内容保持最新
         function loadData() {
-            // 1. 更新图片，防止缓存
-            const img = document.getElementById('equity-curve-img');
-            img.src = `equity_curve.png?t=${new Date().getTime()}`;
+            // 更新图片，防止浏览器缓存
+            const timestamp = new Date().getTime();
+            document.getElementById('equity-curve-img').src = `data/equity_curve.png?t=${timestamp}`;
+            document.getElementById('pnl-hist-img').src = `data/pnl_hist.png?t=${timestamp}`;
 
-            // 2. 加载统计数据
-            fetch('stats.json')
+            // 核心修正 2: 修改 fetch 的 JSON 文件路径
+            fetch('data/stats.json')
                 .then(response => response.json())
                 .then(stats => {
                     const container = document.getElementById('stats-container');
@@ -47,17 +53,13 @@
 
                     for (const [key, value] of Object.entries(stats)) {
                         if (key.includes("最后更新时间")) continue;
-
                         const card = document.createElement('div');
                         card.className = 'stat-card';
-                        
                         const title = document.createElement('h3');
                         title.textContent = key;
-                        
                         const p = document.createElement('p');
                         p.textContent = value;
                         
-                        // 根据正负值添加颜色
                         const numericValue = parseFloat(value);
                         if (!isNaN(numericValue)) {
                             if (key.includes("回撤")) {
@@ -68,18 +70,15 @@
                                 p.className = 'negative';
                             }
                         }
-
                         card.appendChild(title);
                         card.appendChild(p);
                         container.appendChild(card);
                     }
-                    
                     document.getElementById('last-update').textContent = `最后更新: ${stats['最后更新时间 (UTC)']}`;
                 })
                 .catch(error => console.error('加载统计数据失败:', error));
         }
 
-        // 页面加载时执行
         window.onload = loadData;
     </script>
 </body>
